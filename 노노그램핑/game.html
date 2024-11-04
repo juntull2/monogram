@@ -115,25 +115,50 @@
         }
 
         .controls {
-            margin: 20px 0;
             display: flex;
             gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
             justify-content: center;
+            width: 100%;
         }
 
-        button {
+        .controls button {
             padding: 10px 20px;
-            font-size: 14px;
-            cursor: pointer;
+            border: none;
+            border-radius: 5px;
             background: #4CAF50;
             color: white;
-            border: none;
-            border-radius: 4px;
-            transition: background 0.3s ease;
+            cursor: pointer;
+            font-size: 14px;
+            min-width: 100px;
+            white-space: nowrap;
         }
 
-        button:hover {
-            background: #45a049;
+        @media (max-width: 768px) {
+            .controls {
+                padding: 10px;
+                gap: 8px;
+                justify-content: center;
+            }
+
+            .controls button {
+                padding: 8px 16px;
+                font-size: 12px;
+                min-width: 80px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .controls {
+                gap: 6px;
+            }
+
+            .controls button {
+                padding: 6px 12px;
+                font-size: 11px;
+                min-width: 70px;
+            }
         }
 
         .status {
@@ -283,6 +308,66 @@
                 min-width: 44px;
             }
         }
+
+        .check-section {
+            display: flex;
+            flex-direction: column;  /* 세로 방향 정렬 */
+            align-items: center;     /* 가운데 정렬 */
+            gap: 10px;
+            width: 100%;
+            margin: 10px 0;
+        }
+
+        .check-button {
+            padding: 12px 24px;
+            background: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            min-width: 120px;
+            text-align: center;
+        }
+
+        .result-message {
+            text-align: center;
+            font-size: 16px;
+            margin: 10px 0;
+        }
+
+        @media (max-width: 768px) {
+            .check-section {
+                padding: 10px;
+                gap: 8px;
+            }
+
+            .check-button {
+                padding: 10px 20px;
+                font-size: 14px;
+                min-width: 100px;
+            }
+
+            .result-message {
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .check-section {
+                gap: 6px;
+            }
+
+            .check-button {
+                padding: 8px 16px;
+                font-size: 13px;
+                min-width: 90px;
+            }
+
+            .result-message {
+                font-size: 13px;
+            }
+        }
     
     </style>
 </head>
@@ -341,15 +426,16 @@
 
         function generateRandomPuzzle() {
             const fillProbability = {
-                5: 0.40,    // 쉬움: 40% (채우기 확률 감소)
-                8: 0.35,     // 보통: 35%
-                10: 0.25,   // 어려움: 25%
-                25: 0.20     // 전문가: 20%
+                5: 0.35,    // 쉬움: 35%
+                8: 0.30,    // 보통: 30%
+                10: 0.20,   // 어려움: 20%
+                25: 0.15    // 전문가: 15%
             };
 
-            let puzzle = Array(gridSize).fill().map(() => Array(gridSize).fill(0));
-    
-            // 첫 번째 패스: 기본 랜덤 채우기 (더 적은 초기 채우기)
+            // 퍼즐 초기화
+            puzzle = Array(gridSize).fill().map(() => Array(gridSize).fill(0));
+
+            // 기본 랜덤 채우기
             for(let i = 0; i < gridSize; i++) {
                 for(let j = 0; j < gridSize; j++) {
                     if(Math.random() < fillProbability[gridSize]) {
@@ -357,72 +443,33 @@
                     }
                 }
             }
-    
-            // 두 번째 패스: 연속된 패턴 생성 (확률 조정)
-            for(let i = 0; i < gridSize; i++) {
-                for(let j = 0; j < gridSize - 2; j++) {
-                    if(puzzle[i][j] === 1) {
-                        // 연속된 셀을 채울 확률 70%로 감소
-                        if(Math.random() < 0.7) {
-                            puzzle[i][j+1] = 1;
-                            // 3칸 연속 채울 확률 40%로 감소
-                            if(Math.random() < 0.4) {
-                                puzzle[i][j+2] = 1;
-                            }
-                        }
-                    }
-                }
-            }
-        
 
-            // 세 번째 패스: 수직 방향 패턴 (확률 감소)
-            for(let j = 0; j < gridSize; j++) {
-                for(let i = 0; i < gridSize - 2; i++) {
-                    if(puzzle[i][j] === 1) {
-                        if(Math.random() < 0.5) { // 50%로 감소
-                            puzzle[i+1][j] = 1;
-                            if(Math.random() < 0.3) { // 30%로 감소
-                                puzzle[i+2][j] = 1;
-                            }
-                        }
-                    }
-                }
-            }
-        
+            // 최대 힌트 수 강제 생성
+            function ensureMaxHints() {
+                const maxConsecutive = 
+                    gridSize === 5 ? 4 :    // 쉬움: 최대 4
+                    gridSize === 8 ? 6 :    // 보통: 최대 6
+                    gridSize === 10 ? 7 :   // 어려움: 최대 7
+                    16;                     // 전문가: 최대 16
 
-            // 힌트가 너무 작은 행/열 보강 (확률 감소)
-            let rowHints = calculateHints(puzzle);
-            let colHints = calculateHints(puzzle[0].map((col, i) => puzzle.map(row => row[i])));
-            
-            for(let i = 0; i < gridSize; i++) {
-                let maxRowHint = Math.max(...rowHints[i]);
-                let maxColHint = Math.max(...colHints[i]);
-                
-                // 최소 힌트 크기 조건 강화
-                if(maxRowHint <= 1 && Math.random() < 0.5) { // 확률 50%로 감소
-                    let start = Math.floor(Math.random() * (gridSize - 2));
-                    for(let j = start; j < start + 2; j++) { // 연속 길이 감소
-                        puzzle[i][j] = 1;
+                // 최소 2개의 열에 최대 힌트 생성
+                for (let attempt = 0; attempt < 2; attempt++) {
+                    const randomCol = Math.floor(Math.random() * gridSize);
+                    const randomStart = Math.floor(Math.random() * (gridSize - maxConsecutive));
+                    
+                    // 기존 값들을 0으로 초기화
+                    for (let i = 0; i < gridSize; i++) {
+                        puzzle[i][randomCol] = 0;
                     }
-                }
-        
-                if(maxColHint <= 1 && Math.random() < 0.5) {
-                    let start = Math.floor(Math.random() * (gridSize - 2));
-                    for(let j = start; j < start + 2; j++) {
-                        puzzle[j][i] = 1;
+                    
+                    // 최대 힌트 수만큼 연속된 1 설정
+                    for (let i = randomStart; i < randomStart + maxConsecutive && i < gridSize; i++) {
+                        puzzle[i][randomCol] = 1;
                     }
                 }
             }
 
-            // 퍼즐의 복잡도 검증
-            let totalFilled = puzzle.flat().filter(cell => cell === 1).length;
-            let complexity = totalFilled / (gridSize * gridSize);
-            
-            // 너무 쉬운 퍼즐은 재생성
-            if (complexity > 0.7 || complexity < 0.3) {
-                return generateRandomPuzzle();
-            }
-
+            ensureMaxHints();
             return puzzle;
         }
 
@@ -767,7 +814,7 @@
             // 상태 초기화
             document.getElementById('status').textContent = '';
 
-            // 히스토리 초기화
+            // 히스토리 기화
             moveHistory = [];
             document.getElementById('undoBtn').disabled = true;
         }
