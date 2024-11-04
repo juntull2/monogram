@@ -370,57 +370,6 @@
                 font-size: 13px;
             }
         }
-
-        /* 줌 컨트롤 스타일 */
-        .zoom-controls {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            display: flex;
-            gap: 10px;
-            z-index: 1000;
-        }
-
-        .zoom-btn {
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            background: rgba(0, 0, 0, 0.6);
-            color: white;
-            border: none;
-            font-size: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        .zoom-btn:active {
-            background: rgba(0, 0, 0, 0.8);
-            transform: scale(0.95);
-        }
-
-        /* 모바일에서만 표시 */
-        @media (min-width: 769px) {
-            .zoom-controls {
-                display: none;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .zoom-controls {
-                bottom: 15px;
-                right: 15px;
-            }
-
-            .zoom-btn {
-                width: 40px;
-                height: 40px;
-                font-size: 18px;
-            }
-        }
     
     </style>
 </head>
@@ -960,55 +909,6 @@
                 }
             }
         }
-
-        // 줌 컨트롤 추가
-        function addZoomControls() {
-            const zoomControls = document.createElement('div');
-            zoomControls.className = 'zoom-controls';
-            
-            const zoomIn = document.createElement('button');
-            zoomIn.className = 'zoom-btn';
-            zoomIn.innerHTML = '+';
-            
-            const zoomOut = document.createElement('button');
-            zoomOut.className = 'zoom-btn';
-            zoomOut.innerHTML = '−';  // 특수 마이너스 기호 사용
-            
-            let currentScale = 1;
-            const MIN_SCALE = 0.5;
-            const MAX_SCALE = 2;
-            
-            zoomIn.addEventListener('click', () => {
-                currentScale = Math.min(MAX_SCALE, currentScale + 0.2);
-                updateZoom();
-            });
-            
-            zoomOut.addEventListener('click', () => {
-                currentScale = Math.max(MIN_SCALE, currentScale - 0.2);
-                updateZoom();
-            });
-            
-            function updateZoom() {
-                const puzzleArea = document.querySelector('.puzzle-area');
-                puzzleArea.style.transform = `scale(${currentScale})`;
-                // 줌 레벨 저장
-                localStorage.setItem('puzzleZoomLevel', currentScale);
-            }
-            
-            // 저장된 줌 레벨 복원
-            const savedZoom = localStorage.getItem('puzzleZoomLevel');
-            if (savedZoom) {
-                currentScale = parseFloat(savedZoom);
-                updateZoom();
-            }
-            
-            zoomControls.appendChild(zoomOut);
-            zoomControls.appendChild(zoomIn);
-            document.body.appendChild(zoomControls);
-        }
-
-        // 페이지 로드 시 줌 컨트롤 추가
-        document.addEventListener('DOMContentLoaded', addZoomControls);
     </script>
 </body>
 </html>
