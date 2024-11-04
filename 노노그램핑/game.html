@@ -185,6 +185,136 @@
                 font-size: 11px;
             }
         }
+
+        .undo-btn {
+            padding: 8px 16px;
+            margin-left: 10px;
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .undo-btn:hover {
+            background-color: #5a6268;
+        }
+
+        .undo-btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        #undoBtn {
+            background-color: #6c757d;
+        }
+
+        #undoBtn:hover {
+            background-color: #5a6268;
+        }
+
+        #undoBtn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        /* 반응형 스타일 추가 */
+        @media (max-width: 768px) {
+            .game-container {
+                margin: 10px;
+                padding: 10px;
+                transform: scale(0.9);
+                transform-origin: top center;
+            }
+
+            .cell {
+                width: 30px;
+                height: 30px;
+                font-size: 12px;
+            }
+
+            .grid {
+                grid-template-columns: repeat(var(--grid-size), 30px);
+                grid-template-rows: repeat(var(--grid-size), 30px);
+            }
+
+            .row-hints {
+                grid-template-rows: repeat(var(--grid-size), 30px);
+            }
+
+            .col-hints {
+                grid-template-columns: repeat(var(--grid-size), 30px);
+            }
+
+            .hint {
+                font-size: 11px;
+                padding: 2px;
+            }
+
+            .controls {
+                flex-wrap: wrap;
+                gap: 5px;
+            }
+
+            button {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+
+            h1 {
+                font-size: 24px;
+                margin: 10px 0;
+            }
+
+            .difficulty-info {
+                font-size: 12px;
+                margin: 8px;
+                padding: 0 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .game-container {
+                transform: scale(0.8);
+            }
+
+            .cell {
+                width: 25px;
+                height: 25px;
+                font-size: 10px;
+            }
+
+            .grid {
+                grid-template-columns: repeat(var(--grid-size), 25px);
+                grid-template-rows: repeat(var(--grid-size), 25px);
+            }
+
+            .row-hints {
+                grid-template-rows: repeat(var(--grid-size), 25px);
+            }
+
+            .col-hints {
+                grid-template-columns: repeat(var(--grid-size), 25px);
+            }
+
+            .controls button {
+                padding: 6px 10px;
+                font-size: 11px;
+            }
+        }
+
+        /* 터치 디바이스 최적화 */
+        @media (hover: none) {
+            .cell {
+                -webkit-tap-highlight-color: transparent;
+                touch-action: manipulation;
+            }
+
+            button {
+                min-height: 44px;
+                min-width: 44px;
+            }
+        }
     
     </style>
 </head>
@@ -206,6 +336,7 @@
         <button onclick="checkSolution()">정답 확인</button>
         <button onclick="resetGrid()">리셋</button>
         <button onclick="showSolution()">해답 보기</button>
+        <button id="undoBtn" onclick="undoMove()" disabled>되돌리기</button>
     </div>
     <div class="difficulty-info">동일 난이도를 한번 더 누르면 퍼즐이 초기화됩니다
         <br>
@@ -240,20 +371,91 @@
             newPuzzle();
         }
 
-        // 랜덤 퍼즐 생성 함수
         function generateRandomPuzzle() {
-            const complexity = {
-                5: 0.5,    // 쉬움: 50% 채울 확률
-                8: 0.4,    // 보통: 40% 채울 확률
-                10: 0.35,  // 어려움: 35% 채울 확률
-                25: 0.3    // 전문가: 30% 채울 확률
+            const fillProbability = {
+                5: 0.40,    // 쉬움: 40% (채우기 확률 감소)
+                8: 0.35,     // 보통: 35%
+                10: 0.25,   // 어려움: 25%
+                25: 0.20     // 전문가: 20%
             };
-            // 랜덤 퍼즐 생성
-            return Array(gridSize).fill().map(() => 
-                Array(gridSize).fill().map(() => 
-                    Math.random() < complexity[gridSize] ? 1 : 0
-                )
-            );
+
+            let puzzle = Array(gridSize).fill().map(() => Array(gridSize).fill(0));
+    
+            // 첫 번째 패스: 기본 랜덤 채우기 (더 적은 초기 채우기)
+            for(let i = 0; i < gridSize; i++) {
+                for(let j = 0; j < gridSize; j++) {
+                    if(Math.random() < fillProbability[gridSize]) {
+                        puzzle[i][j] = 1;
+                    }
+                }
+            }
+    
+            // 두 번째 패스: 연속된 패턴 생성 (확률 조정)
+            for(let i = 0; i < gridSize; i++) {
+                for(let j = 0; j < gridSize - 2; j++) {
+                    if(puzzle[i][j] === 1) {
+                        // 연속된 셀을 채울 확률 70%로 감소
+                        if(Math.random() < 0.7) {
+                            puzzle[i][j+1] = 1;
+                            // 3칸 연속 채울 확률 40%로 감소
+                            if(Math.random() < 0.4) {
+                                puzzle[i][j+2] = 1;
+                            }
+                        }
+                    }
+                }
+            }
+        
+
+            // 세 번째 패스: 수직 방향 패턴 (확률 감소)
+            for(let j = 0; j < gridSize; j++) {
+                for(let i = 0; i < gridSize - 2; i++) {
+                    if(puzzle[i][j] === 1) {
+                        if(Math.random() < 0.5) { // 50%로 감소
+                            puzzle[i+1][j] = 1;
+                            if(Math.random() < 0.3) { // 30%로 감소
+                                puzzle[i+2][j] = 1;
+                            }
+                        }
+                    }
+                }
+            }
+        
+
+            // 힌트가 너무 작은 행/열 보강 (확률 감소)
+            let rowHints = calculateHints(puzzle);
+            let colHints = calculateHints(puzzle[0].map((col, i) => puzzle.map(row => row[i])));
+            
+            for(let i = 0; i < gridSize; i++) {
+                let maxRowHint = Math.max(...rowHints[i]);
+                let maxColHint = Math.max(...colHints[i]);
+                
+                // 최소 힌트 크기 조건 강화
+                if(maxRowHint <= 1 && Math.random() < 0.5) { // 확률 50%로 감소
+                    let start = Math.floor(Math.random() * (gridSize - 2));
+                    for(let j = start; j < start + 2; j++) { // 연속 길이 감소
+                        puzzle[i][j] = 1;
+                    }
+                }
+        
+                if(maxColHint <= 1 && Math.random() < 0.5) {
+                    let start = Math.floor(Math.random() * (gridSize - 2));
+                    for(let j = start; j < start + 2; j++) {
+                        puzzle[j][i] = 1;
+                    }
+                }
+            }
+
+            // 퍼즐의 복잡도 검증
+            let totalFilled = puzzle.flat().filter(cell => cell === 1).length;
+            let complexity = totalFilled / (gridSize * gridSize);
+            
+            // 너무 쉬운 퍼즐은 재생성
+            if (complexity > 0.7 || complexity < 0.3) {
+                return generateRandomPuzzle();
+            }
+
+            return puzzle;
         }
 
         // 새 퍼즐 생성 함수
@@ -313,7 +515,7 @@
                 rowHintsContainer.appendChild(hintDiv);
             });
             
-            // 열 힌트 표시 (순서 변경: reverse() 제거)
+            // 열 힌��� 표시 (순서 변경: reverse() 제거)
             colHints.forEach(hints => {
                 const hintDiv = document.createElement('div');
                 hintDiv.className = 'hint';
@@ -424,6 +626,9 @@
                         playerGrid[row][col] = 0;
                     }
                 }
+
+                // 상태 변경 후 저장
+                saveState();
             });
 
             // 마우스 엔터 이벤트 (드래그)
@@ -593,6 +798,10 @@
             }
             // 상태 초기화
             document.getElementById('status').textContent = '';
+
+            // 히스토리 초기화
+            moveHistory = [];
+            document.getElementById('undoBtn').disabled = true;
         }
 
         // 해답 보기 함수 추가
@@ -620,6 +829,68 @@
             const status = document.getElementById('status');
             status.textContent = '해답이 표시되었습니다.';
             status.style.color = '#666';
+        }
+
+        // 상태 관리를 위한 변수 추가
+        let moveHistory = [];
+        const MAX_HISTORY = 50; // 최대 저장할 이동 횟수
+
+        // 상태 저장 함수
+        function saveState() {
+            const currentState = playerGrid.map(row => [...row]); // 깊은 복사
+            moveHistory.push(currentState);
+            
+            // 히스토리 크기 제한
+            if (moveHistory.length > MAX_HISTORY) {
+                moveHistory.shift();
+            }
+            
+            // 되돌리기 버튼 활성화
+            document.getElementById('undoBtn').disabled = false;
+        }
+
+        // 되돌리기 함수
+        function undoMove() {
+            if (moveHistory.length > 0) {
+                const previousState = moveHistory.pop();
+                playerGrid = previousState.map(row => [...row]); // 깊은 복사
+                
+                // 그리드 UI 업데이트
+                updateGridUI();
+                
+                // 히스토리가 비어있으면 버튼 비활성화
+                if (moveHistory.length === 0) {
+                    document.getElementById('undoBtn').disabled = true;
+                }
+            }
+        }
+
+        // 그리드 UI 업데이트 함수
+        function updateGridUI() {
+            const cells = document.getElementsByClassName('cell');
+            for (let cell of cells) {
+                const row = parseInt(cell.dataset.row);
+                const col = parseInt(cell.dataset.col);
+                
+                // 셀 상태 초기화
+                cell.classList.remove('filled', 'marked', 'question');
+                cell.textContent = '';
+                
+                // 현재 상태에 따라 셀 업데이트
+                switch (playerGrid[row][col]) {
+                    case 1:
+                        cell.classList.add('filled');
+                        break;
+                    case 2:
+                        cell.classList.add('marked');
+                        cell.textContent = 'X';
+                        break;
+                    case 3:
+                        cell.classList.add('question');
+                        cell.textContent = '?';
+                        break;
+                }
+            }
         }
     </script>
 </body>
