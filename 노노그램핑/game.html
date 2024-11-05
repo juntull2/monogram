@@ -2,21 +2,51 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <head>
-        <!-- 기존 메타 태그 수정 -->
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-    <title>노노그램 게임</title>
+    <title>노노그램</title>
     <style>
         body {
+            font-family: Arial, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
-            font-family: Arial, sans-serif;
             background-color: #f0f0f0;
         }
-        
+
+        .controls {
+            margin: 30px auto 15px;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            max-width: 600px;
+        }
+
+        .controls button {
+            padding: 8px 16px;
+            font-size: 15px;
+            font-weight: bold;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            min-width: 120px;
+        }
+
+        .controls button:hover {
+            background-color: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .controls button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
         .game-container {
-            margin: 20px;
             display: grid;
             grid-template-columns: auto 1fr;
             grid-template-rows: auto 1fr;
@@ -24,991 +54,530 @@
             background: white;
             padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            transition: all 0.3s ease;
-            overflow: auto;
-            max-width: 100%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .empty-corner {
+            width: 100px;
+            height: 100px;
         }
 
         .row-hints {
-            display: grid;
-            grid-template-rows: repeat(5, 40px);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
             padding-right: 10px;
-            grid-row: 2;
-            grid-column: 1;
+        }
+
+        .row-hint {
+            display: flex;
+            justify-content: flex-end;
+            gap: 5px;
+            align-items: center;
+            height: 30px;
         }
 
         .col-hints {
-            display: grid;
-            grid-template-columns: repeat(5, 40px);
-            height: auto;
-            min-height: 40px;
-            padding-bottom: 5px;
-            grid-row: 1;
-            grid-column: 2;
-        }
-
-        .hint {
             display: flex;
-            align-items: center;
-            gap: 5px;
-            padding: 5px;
-            font-size: 14px;
+            justify-content: space-around;
+            padding-bottom: 10px;
         }
 
-        /* 행 힌트 정렬 수정 */
-        .row-hints .hint {
-            justify-content: flex-end;
-            height: 40px;
-            align-items: center;
-        }
-
-        /* 열 힌트 정렬 수정 */
-        .col-hints .hint {
+        .col-hint {
+            display: flex;
             flex-direction: column;
-            justify-content: flex-end;
             align-items: center;
-            width: 40px;
-            height: 100%;
+            justify-content: flex-end;
             gap: 2px;
-        }
-
-        .col-hints .hint span {
-            display: block;
-            padding: 2px 0;
+            width: 30px;
+            height: 100px;
         }
 
         .grid {
             display: grid;
-            grid-template-columns: repeat(5, 40px);
-            grid-template-rows: repeat(5, 40px);
             gap: 1px;
-            background: #ccc;
-            grid-row: 2;
-            grid-column: 2;
-            box-sizing: border-box;
+            background-color: #ccc;
+            user-select: none;
         }
 
         .cell {
-            width: 100%;
-            height: 100%;
-            background: white;
-            border: 0.5px solid #ccc;
+            width: 30px;
+            height: 30px;
+            background-color: white;
+            border: 1px solid #ddd;
             cursor: pointer;
+            position: relative;
             display: flex;
-            align-items: center;
             justify-content: center;
-            font-weight: bold;
-            user-select: none;
-            box-sizing: border-box;
-            font-size: 14px;
+            align-items: center;
         }
 
         .cell.filled {
-            background: #333;
+            background-color: #333;
         }
 
-        .cell.marked {
-            color: red;
+        .cell.marked::after {
+            content: "X";
+            color: #ff0000;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-weight: bold;
+            font-size: 20px;
+            pointer-events: none;
         }
 
-        .cell.question {
-            color: blue;
+        .cell.question::after {
+            content: "?";
+            color: #0000ff;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-weight: bold;
+            font-size: 20px;
+            pointer-events: none;
         }
 
-        .controls {
-            display: flex;
-            gap: 10px;
-            margin: 20px 0;
-            flex-wrap: wrap;
-            justify-content: center;
-            width: 100%;
-        }
-
-        .controls button {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            background: #4CAF50;
-            color: white;
-            cursor: pointer;
-            font-size: 14px;
-            min-width: 100px;
-            white-space: nowrap;
-        }
-
-        @media (max-width: 768px) {
-            .controls {
-                padding: 10px;
-                gap: 8px;
-                justify-content: center;
-            }
-
-            .controls button {
-                padding: 8px 16px;
-                font-size: 12px;
-                min-width: 80px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .controls {
-                gap: 6px;
-            }
-
-            .controls button {
-                padding: 6px 12px;
-                font-size: 11px;
-                min-width: 70px;
-            }
+        .difficulty-info {
+            margin: 20px;
+            padding: 10px;
+            background-color: #fff;
+            border-radius: 4px;
+            text-align: center;
         }
 
         .status {
-            margin-top: 20px;
-            font-size: 18px;
+            margin-top: 0px;
+            padding: 10px;
             font-weight: bold;
         }
 
-        /* 빈 공간 스타일 */
-        .empty-corner {
-            grid-row: 1;
-            grid-column: 1;
+        .hint-number {
+            font-size: 12px;
+            margin: 2px;
         }
 
-        /* 안내 메시지 스타일 추가 */
-        .difficulty-info {
+        .hint-number.blue {
+            color: blue;
+        }
+
+        .hint-number.brown {
+            color: brown;
+        }
+        .message {
             text-align: center;
-            color: #666;
-            font-size: 14px;
-            margin: 10px 0;
-            font-style: italic;
-        }
-
-        /* 스타일 추가 */
-        @media (max-width: 1200px) {
-            .cell {
-                width: 100%;
-                height: 100%;
-                border-width: 0.5px;
-                font-size: 12px;
-            }
-            
-            .grid {
-                gap: 0;
-            }
-            
-            .row-hints {
-                grid-template-rows: repeat(25, 25px);
-            }
-            
-            .col-hints {
-                grid-template-columns: repeat(25, 25px);
-            }
-            
-            .grid {
-                grid-template-columns: repeat(25, 25px);
-                grid-template-rows: repeat(25, 25px);
-            }
-            
-            .hint {
-                font-size: 11px;
-            }
-        }
-
-        .undo-btn {
-            padding: 8px 16px;
-            margin-left: 10px;
-            background-color: #6c757d;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        .undo-btn:hover {
-            background-color: #5a6268;
-        }
-
-        .undo-btn:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
-        }
-
-        #undoBtn {
-            background-color: #6c757d;
-        }
-
-        #undoBtn:hover {
-            background-color: #5a6268;
-        }
-
-        #undoBtn:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
-        }
-
-        /* 반응형 스타일 추가 */
-        @media (max-width: 768px) {
-            .game-container {
-                margin: 10px;
-                padding: 10px;
-                transform: none;
-                overflow-x: auto;
-            }
-
-            .cell {
-                width: 40px;
-                height: 40px;
-                font-size: 14px;
-                border: 0.5px solid #ccc;
-            }
-
-            .grid {
-                gap: 0;
-                background: #ccc;
-                border: 0.5px solid #ccc;
-            }
-
-            .row-hints .hint {
-                height: 40px;
-            }
-
-            .col-hints .hint {
-                width: 40px;
-            }
-
-            .controls {
-                padding: 10px;
-                overflow-x: auto;
-                white-space: nowrap;
-                width: 100%;
-                justify-content: flex-start;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .game-container {
-                transform: none;
-                padding: 5px;
-            }
-
-            .cell {
-                width: 40px;
-                height: 40px;
-            }
-        }
-
-        /* 터치 디바이스 최적화 */
-        @media (hover: none) {
-            .cell {
-                -webkit-tap-highlight-color: transparent;
-                touch-action: manipulation;
-            }
-
-            button {
-                min-height: 44px;
-                min-width: 44px;
-            }
-        }
-
-        .check-section {
-            display: flex;
-            flex-direction: column;  /* 세로 방향 정렬 */
-            align-items: center;     /* 가운데 정렬 */
-            gap: 10px;
-            width: 100%;
-            margin: 10px 0;
-        }
-
-        .check-button {
-            padding: 12px 24px;
-            background: #2196F3;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
+            margin: 0 auto 15px;
             font-size: 16px;
-            min-width: 120px;
-            text-align: center;
+            font-weight: bold;
+            color: #4CAF50;
+            padding: 5px;
+            min-height: 20px;
         }
-
-        .result-message {
-            text-align: center;
-            font-size: 16px;
-            margin: 10px 0;
-        }
-
-        @media (max-width: 768px) {
-            .check-section {
-                padding: 10px;
-                gap: 8px;
-            }
-
-            .check-button {
-                padding: 10px 20px;
-                font-size: 14px;
-                min-width: 100px;
-            }
-
-            .result-message {
-                font-size: 14px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .check-section {
-                gap: 6px;
-            }
-
-            .check-button {
-                padding: 8px 16px;
-                font-size: 13px;
-                min-width: 90px;
-            }
-
-            .result-message {
-                font-size: 13px;
-            }
-        }
-
-        /* 줌 컨트롤 스타일 */
-        .zoom-controls {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            display: flex;
-            gap: 10px;
-            z-index: 1000;
-        }
-
-        .zoom-btn {
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            background: rgba(0, 0, 0, 0.6);
-            color: white;
-            border: none;
-            font-size: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        .zoom-btn:active {
-            background: rgba(0, 0, 0, 0.8);
-            transform: scale(0.95);
-        }
-
-        /* 모바일에서만 표시 */
-        @media (min-width: 769px) {
-            .zoom-controls {
-                display: none;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .zoom-controls {
-                bottom: 15px;
-                right: 15px;
-            }
-
-            .zoom-btn {
-                width: 40px;
-                height: 40px;
-                font-size: 18px;
-            }
-        }
-    
     </style>
 </head>
 <body>
-    <h1>노노그램</h1>
     <div class="controls">
-        <button onclick="setDifficulty('easy')">쉬움 (5x5)</button>
-        <button onclick="setDifficulty('medium')">보통 (8x8)</button>
-        <button onclick="setDifficulty('hard')">어려움 (10x10)</button>
-        <button onclick="setDifficulty('expert')">강사님께 드리는 선물^^ (25x25)</button>
+        <button onclick="setDifficulty(5)">쉬움 (5x5)</button>
+        <button onclick="setDifficulty(10)">보통 (10x10)</button>
+        <button onclick="setDifficulty(15)">어려움 (15x15)</button>
+        <button onclick="setDifficulty(20)">전문가 (20x20)</button>
     </div>
+
+    <div id="status" class="status"></div>
+
     <div class="game-container">
         <div class="empty-corner"></div>
-        <div class="row-hints" id="rowHints"></div>
-        <div class="col-hints" id="colHints"></div>
-        <div class="grid" id="grid"></div>
+        <div id="colHints" class="col-hints"></div>
+        <div id="rowHints" class="row-hints"></div>
+        <div id="grid" class="grid"></div>
     </div>
+
     <div class="controls">
         <button onclick="checkSolution()">정답 확인</button>
         <button onclick="resetGrid()">리셋</button>
         <button onclick="showSolution()">해답 보기</button>
-        <button id="undoBtn" onclick="undoMove()" disabled>되돌리기</button>
     </div>
-    <div class="difficulty-info">동일 난이도를 한번 더 누르면 퍼즐이 초기화됩니다
-        <br>
-        왼쪽 마우스 클릭으로 셀을 채우거나 비울 수 있습니다.
-        <br>
+
+    <div class="difficulty-info">
+        동일 난이도를 한번 더 누르면 퍼즐이 초기화됩니다<br>
+        왼쪽 마우스 클릭으로 셀을 채우거나 비울 수 있습니다.<br>
         오른쪽 마우스 클릭으로 셀을 마크하거나 물음표로 표시할 수 있습니다.
     </div>
-    <div class="status" id="status"></div>
 
     <script>
-        // 게임 설정
-        let gridSize = 5; // 기본 크기
+        let currentSize = 10;
+        let grid = [];
         let solution = [];
-        let playerGrid = [];
+        let rowHints = [];
+        let colHints = [];
+        
+        let isDragging = false;
+        let dragStartRow = null;
+        let dragStartCol = null;
+        let dragDirection = null;
+        let dragValue = null;
+        let tempGrid = null;
+        let lastClickTime = 0;
 
-        // 난이도 설정 함수
-        function setDifficulty(level) {
-            switch(level) {
-                case 'easy':
-                    gridSize = 5;
-                    break;
-                case 'medium':
-                    gridSize = 8;
-                    break;
-                case 'hard':
-                    gridSize = 10;
-                    break;
-                case 'expert':
-                    gridSize = 25;
-                    break;
-            }
-            newPuzzle();
-        }
+        function initializeGame(size) {
+            currentSize = size;
+            grid = Array(size).fill().map(() => Array(size).fill(0));
+            generatePuzzle();
+            updateDisplay();
 
-        function generateRandomPuzzle() {
-            const fillProbability = {
-                5: 0.35,    // 쉬움: 35%
-                8: 0.30,    // 보통: 30%
-                10: 0.20,   // 어려움: 20%
-                25: 0.15    // 전문가: 15%
-            };
-
-            // 퍼즐 초기화
-            puzzle = Array(gridSize).fill().map(() => Array(gridSize).fill(0));
-
-            // 기본 랜덤 채우기
-            for(let i = 0; i < gridSize; i++) {
-                for(let j = 0; j < gridSize; j++) {
-                    if(Math.random() < fillProbability[gridSize]) {
-                        puzzle[i][j] = 1;
-                    }
-                }
-            }
-
-            // 최대 힌트 수 강제 생성
-            function ensureMaxHints() {
-                const maxConsecutive = 
-                    gridSize === 5 ? 4 :    // 쉬움: 최대 4
-                    gridSize === 8 ? 6 :    // 보통: 최대 6
-                    gridSize === 10 ? 7 :   // 어려움: 최대 7
-                    16;                     // 전문가: 최대 16
-
-                // 최소 2개의 열에 최대 힌트 생성
-                for (let attempt = 0; attempt < 2; attempt++) {
-                    const randomCol = Math.floor(Math.random() * gridSize);
-                    const randomStart = Math.floor(Math.random() * (gridSize - maxConsecutive));
-                    
-                    // 기존 값들을 0으로 초기화
-                    for (let i = 0; i < gridSize; i++) {
-                        puzzle[i][randomCol] = 0;
-                    }
-                    
-                    // 최대 힌트 수만큼 연속된 1 설정
-                    for (let i = randomStart; i < randomStart + maxConsecutive && i < gridSize; i++) {
-                        puzzle[i][randomCol] = 1;
-                    }
-                }
-            }
-
-            ensureMaxHints();
-            return puzzle;
-        }
-
-        // 새 퍼즐 생성 함수
-        function newPuzzle() {
-            solution = generateRandomPuzzle();
-            playerGrid = Array(gridSize).fill().map(() => Array(gridSize).fill(0));
+            const gridElement = document.getElementById('grid');
+            gridElement.addEventListener('mousedown', startDrag);
+            document.addEventListener('mouseup', endDrag);
+            document.addEventListener('mousemove', handleDrag);
             
-            // 그리드 스타일 업데이트
-            const grid = document.getElementById('grid');
-            grid.style.gridTemplateColumns = `repeat(${gridSize}, 40px)`;
-            grid.style.gridTemplateRows = `repeat(${gridSize}, 40px)`;
-            
-            // 힌트 컨테이너 스타일 업데이트
-            const rowHints = document.getElementById('rowHints');
-            const colHints = document.getElementById('colHints');
-            rowHints.style.gridTemplateRows = `repeat(${gridSize}, 40px)`;
-            colHints.style.gridTemplateColumns = `repeat(${gridSize}, 40px)`;
-            
-            // UI 초기화
-            initializeGame();
-        }
-
-        // 게임 초기화 함수
-        function initializeGame() {
-            // 힌트 초기화
-            const rowHints = calculateHints(solution);
-            const colHints = calculateHints(solution[0].map((col, i) => solution.map(row => row[i])));
-            
-            // 힌트 표시 업데이트
-            updateHints(rowHints, colHints);
-            
-            // 그리드 초기화
-            createGrid();
-            
-            // 상태 초기화
-            document.getElementById('status').textContent = '';
-        }
-
-        // 힌트 업데이트 함수
-        function updateHints(rowHints, colHints) {
-            const rowHintsContainer = document.getElementById('rowHints');
-            const colHintsContainer = document.getElementById('colHints');
-            
-            // 힌트 컨테이너 초기화
-            rowHintsContainer.innerHTML = '';
-            colHintsContainer.innerHTML = '';
-            
-            // 행 힌트 표시 (순서 변경: reverse() 제거)
-            rowHints.forEach(hints => {
-                const hintDiv = document.createElement('div');
-                hintDiv.className = 'hint';
-                hints.forEach(num => {
-                    const span = document.createElement('span');
-                    span.textContent = num;
-                    hintDiv.appendChild(span);
-                });
-                rowHintsContainer.appendChild(hintDiv);
-            });
-            
-            // 열 힌트 표시 (순서 변경: reverse() 제거)
-            colHints.forEach(hints => {
-                const hintDiv = document.createElement('div');
-                hintDiv.className = 'hint';
-                hints.forEach(num => {
-                    const span = document.createElement('span');
-                    span.textContent = num;
-                    hintDiv.appendChild(span);
-                });
-                colHintsContainer.appendChild(hintDiv);
+            gridElement.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                return false;
             });
         }
 
-        // 그리드 생성 함수
-        function createGrid() {
-            const grid = document.getElementById('grid');
-            grid.innerHTML = '';
+        function startDrag(e) {
+            if (!e.target.classList.contains('cell')) return;
+            e.preventDefault();
             
-            // 그리드 초기화
-            for (let i = 0; i < gridSize; i++) {
-                for (let j = 0; j < gridSize; j++) {
+            if (e.button === 2) {
+                const currentTime = Date.now();
+                if (currentTime - lastClickTime < 100) {
+                    return;
+                }
+                lastClickTime = currentTime;
+            }
+            
+            const row = parseInt(e.target.dataset.row);
+            const col = parseInt(e.target.dataset.col);
+            
+            isDragging = true;
+            dragStartRow = row;
+            dragStartCol = col;
+            dragDirection = null;
+            
+            tempGrid = grid.map(row => [...row]);
+            
+            if (e.button === 2) {
+                const currentValue = grid[row][col];
+                if (currentValue === 0 || currentValue === 1) dragValue = 2;
+                else if (currentValue === 2) dragValue = 3;
+                else dragValue = 0;
+            } else {
+                dragValue = grid[row][col] === 1 ? 0 : 1;
+            }
+            
+            grid[row][col] = dragValue;
+            updateDisplay();
+        }
+
+        function handleDrag(e) {
+            if (!isDragging) return;
+            
+            let targetCell;
+            if (e.type === 'mousemove') {
+                targetCell = e.target.closest('.cell');
+            } else if (e.type === 'touchmove') {
+                const touch = e.touches[0];
+                const element = document.elementFromPoint(touch.clientX, touch.clientY);
+                targetCell = element?.closest('.cell');
+            }
+            
+            if (!targetCell) return;
+            
+            const row = parseInt(targetCell.dataset.row);
+            const col = parseInt(targetCell.dataset.col);
+            
+            if (!dragDirection) {
+                const rowDiff = Math.abs(row - dragStartRow);
+                const colDiff = Math.abs(col - dragStartCol);
+                
+                if (rowDiff > 0 || colDiff > 0) {
+                    if (rowDiff > colDiff) {
+                        dragDirection = 'col';
+                    } else {
+                        dragDirection = 'row';
+                    }
+                }
+            }
+            
+            grid = tempGrid.map(row => [...row]);
+            grid[dragStartRow][dragStartCol] = dragValue;
+            
+            if (dragDirection === 'row' && row === dragStartRow) {
+                const start = Math.min(dragStartCol, col);
+                const end = Math.max(dragStartCol, col);
+                for (let c = start; c <= end; c++) {
+                    grid[row][c] = dragValue;
+                }
+            } else if (dragDirection === 'col' && col === dragStartCol) {
+                const start = Math.min(dragStartRow, row);
+                const end = Math.max(dragStartRow, row);
+                for (let r = start; r <= end; r++) {
+                    grid[r][col] = dragValue;
+                }
+            }
+            
+            updateDisplay();
+        }
+
+        function endDrag() {
+            if (!isDragging) return;
+            
+            if (dragDirection === 'row') {
+                checkLineCompletion(dragStartRow, true);
+            } else if (dragDirection === 'col') {
+                checkLineCompletion(dragStartCol, false);
+            } else {
+                checkLineCompletion(dragStartRow, true);
+                checkLineCompletion(dragStartCol, false);
+            }
+            
+            isDragging = false;
+            dragStartRow = null;
+            dragStartCol = null;
+            dragDirection = null;
+            dragValue = null;
+            tempGrid = null;
+            
+            updateDisplay();
+        }
+
+        function toggleCell(row, col) {
+            moveHistory.push({
+                row: row,
+                col: col,
+                previousState: grid[row][col]
+            });
+            
+            grid[row][col] = grid[row][col] === 1 ? 0 : 1;
+            
+            checkLineCompletion(row, true);
+            checkLineCompletion(col, false);
+            updateDisplay();
+        }
+
+        function markCell(row, col) {
+            moveHistory.push({
+                row: row,
+                col: col,
+                previousState: grid[row][col]
+            });
+            
+            if (grid[row][col] === 0 || grid[row][col] === 1) grid[row][col] = 2;
+            else if (grid[row][col] === 2) grid[row][col] = 3;
+            else if (grid[row][col] === 3) grid[row][col] = 0;
+            
+            updateDisplay();
+        }
+
+        function checkLineCompletion(lineIndex, isRow) {
+            const line = isRow ? grid[lineIndex] : grid.map(row => row[lineIndex]);
+            const targetHints = isRow ? rowHints[lineIndex] : colHints[lineIndex];
+            const currentHints = getHints(line);
+            
+            if (JSON.stringify(currentHints) === JSON.stringify(targetHints)) {
+                if (isRow) {
+                    for (let j = 0; j < currentSize; j++) {
+                        if (grid[lineIndex][j] === 0) {
+                            grid[lineIndex][j] = 2;
+                        }
+                    }
+                } else {
+                    for (let i = 0; i < currentSize; i++) {
+                        if (grid[i][lineIndex] === 0) {
+                            grid[i][lineIndex] = 2;
+                        }
+                    }
+                }
+                updateDisplay();
+            }
+        }
+
+        function getHints(line) {
+            const hints = [];
+            let count = 0;
+            
+            for (let i = 0; i <= line.length; i++) {
+                if (i < line.length && line[i] === 1) {
+                    count++;
+                } else if (count > 0) {
+                    hints.push(count);
+                    count = 0;
+                }
+            }
+            
+            return hints.length ? hints : [0];
+        }
+
+        function updateDisplay() {
+            const gridElement = document.getElementById('grid');
+            gridElement.style.gridTemplateColumns = `repeat(${currentSize}, 30px)`;
+            gridElement.innerHTML = '';
+
+            for (let i = 0; i < currentSize; i++) {
+                for (let j = 0; j < currentSize; j++) {
                     const cell = document.createElement('div');
                     cell.className = 'cell';
                     cell.dataset.row = i;
                     cell.dataset.col = j;
                     
-                    // 그리드 이벤트 리스너들 추가
-                    addCellEventListeners(cell);
-                    // 그리드에 셀 추가
-                    grid.appendChild(cell);
+                    if (grid[i][j] === 1) {
+                        cell.classList.add('filled');
+                    } else if (grid[i][j] === 2) {
+                        cell.classList.add('marked');
+                    } else if (grid[i][j] === 3) {
+                        cell.classList.add('question');
+                    }
+
+                    cell.addEventListener('click', () => toggleCell(i, j));
+                    cell.addEventListener('contextmenu', (e) => {
+                        e.preventDefault();
+                        markCell(i, j);
+                    });
+                    
+                    gridElement.appendChild(cell);
                 }
+            }
+
+            updateHints();
+        }
+
+        function updateHints() {
+            const rowHintsElement = document.getElementById('rowHints');
+            rowHintsElement.innerHTML = '';
+            
+            rowHints.forEach((hints, i) => {
+                const hintDiv = document.createElement('div');
+                hintDiv.className = 'row-hint';
+                hints.forEach(hint => {
+                    const hintSpan = document.createElement('span');
+                    hintSpan.className = 'hint-number brown';
+                    hintSpan.textContent = hint;
+                    hintDiv.appendChild(hintSpan);
+                });
+                rowHintsElement.appendChild(hintDiv);
+            });
+
+            const colHintsElement = document.getElementById('colHints');
+            colHintsElement.innerHTML = '';
+            
+            colHints.forEach(hints => {
+                const hintDiv = document.createElement('div');
+                hintDiv.className = 'col-hint';
+                hints.forEach(hint => {
+                    const hintSpan = document.createElement('span');
+                    hintSpan.className = 'hint-number blue';
+                    hintSpan.textContent = hint;
+                    hintDiv.appendChild(hintSpan);
+                });
+                colHintsElement.appendChild(hintDiv);
+            });
+        }
+
+        function undoMove() {
+            if (moveHistory.length > 0) {
+                const lastMove = moveHistory.pop();
+                grid[lastMove.row][lastMove.col] = lastMove.previousState;
+                updateDisplay();
             }
         }
 
-        // 페이지 로드 시 첫 퍼즐 생성
-        window.onload = newPuzzle;
+        function checkSolution() {
+            const correct = grid.every((row, i) => 
+                row.every((cell, j) => cell === solution[i][j])
+            );
+            
+            document.getElementById('status').textContent = 
+                correct ? '정답입니다!' : '틀렸습니다. 다시 시도해보세요.';
+        }
 
-        // 힌트 계산 함수
-        function calculateHints(array) {
-            const hints = [];
-            for (let i = 0; i < array.length; i++) {
-                const row = array[i];
-                const rowHints = [];
+        function showSolution() {
+            grid = solution.map(row => [...row]);
+            updateDisplay();
+        }
+
+        function resetGrid() {
+            grid = Array(currentSize).fill().map(() => Array(currentSize).fill(0));
+            moveHistory = [];
+            updateDisplay();
+            document.getElementById('status').textContent = '';
+        }
+
+        function setDifficulty(size) {
+            if (size === currentSize) {
+                resetGrid();
+            } else {
+                initializeGame(size);
+            }
+            document.getElementById('status').textContent = '';
+        }
+
+        function generatePuzzle() {
+            solution = Array(currentSize).fill().map(() => 
+                Array(currentSize).fill().map(() => 
+                    Math.random() < 0.5 ? 1 : 0
+                )
+            );
+
+            rowHints = solution.map(row => {
+                const hints = [];
                 let count = 0;
                 
-                // 힌트 계산
-                for (let j = 0; j <= row.length; j++) {
-                    if (j < row.length && row[j] === 1) {
+                for (let i = 0; i <= row.length; i++) {
+                    if (i < row.length && row[i] === 1) {
                         count++;
                     } else if (count > 0) {
-                        rowHints.push(count);
+                        hints.push(count);
                         count = 0;
                     }
                 }
                 
-                hints.push(rowHints.length > 0 ? rowHints : [0]);
+                return hints.length ? hints : [0];
+            });
+
+            colHints = [];
+            for (let j = 0; j < currentSize; j++) {
+                const hints = [];
+                let count = 0;
+                
+                for (let i = 0; i <= currentSize; i++) {
+                    if (i < currentSize && solution[i][j] === 1) {
+                        count++;
+                    } else if (count > 0) {
+                        hints.push(count);
+                        count = 0;
+                    }
+                }
+                
+                colHints.push(hints.length ? hints : [0]);
             }
-            return hints;
         }
 
-        // 마우스 다운 이벤트
-        function addCellEventListeners(cell) {
-            cell.addEventListener('mousedown', function(e) {
-                e.preventDefault();
-                isMouseDown = true;
-                isRightClick = e.button === 2;
-
-                // 드래그 시작 위치 저장
-                dragStartRow = parseInt(this.dataset.row);
-                dragStartCol = parseInt(this.dataset.col);
-                dragEndRow = dragStartRow;
-                dragEndCol = dragStartCol;
-                dragDirection = null; // 드래그 방향 초기화
-
-                // 셀 위치 저장
-                const row = parseInt(this.dataset.row);
-                const col = parseInt(this.dataset.col);
-
-                if (isRightClick) {
-                    // 우클릭 동작 결정
-                    if (this.classList.contains('marked')) {
-                        currentAction = 'question';
-                        this.classList.remove('marked');
-                        this.classList.add('question');
-                        this.textContent = '?';
-                        playerGrid[row][col] = 3;
-                    } else if (this.classList.contains('question')) {
-                        currentAction = 'clear';
-                        this.classList.remove('question');
-                        this.textContent = '';
-                        playerGrid[row][col] = 0;
-                    } else if (!this.classList.contains('filled')) {
-                        currentAction = 'mark';
-                        this.classList.add('marked');
-                        this.textContent = 'X';
-                        playerGrid[row][col] = 2;
-                    }
-                } else {
-                    // 좌클릭 동작 결정
-                    if (!this.classList.contains('filled')) {
-                        currentAction = 'fill';
-                        this.classList.remove('marked', 'question');
-                        this.classList.add('filled');
-                        this.textContent = '';
-                        playerGrid[row][col] = 1;
-                    } else {
-                        currentAction = 'clear';
-                        this.classList.remove('filled');
-                        playerGrid[row][col] = 0;
-                    }
-                }
-
-                // 상태 변경 후 저장
-                saveState();
-            });
-
-            // 마우스 엔터 이벤트 (드래그)
-            cell.addEventListener('mouseenter', function(e) {
-                if (!isMouseDown) return;
-
-                // 현재 셀 위치 저장
-                const currentRow = parseInt(this.dataset.row);
-                const currentCol = parseInt(this.dataset.col);
-
-                // 드래 방향 결정 (처음 이동할 때만)
-                if (!dragDirection) {
-                    if (currentRow !== dragStartRow && currentCol !== dragStartCol) {
-                        // 각선 방향으로 드래그 시도시 가장 큰 변화를 이는 방향으로 결정
-                        const rowDiff = Math.abs(currentRow - dragStartRow);
-                        const colDiff = Math.abs(currentCol - dragStartCol);
-                        dragDirection = rowDiff > colDiff ? 'vertical' : 'horizontal';
-                    } else if (currentRow !== dragStartRow) {
-                        dragDirection = 'vertical';
-                    } else if (currentCol !== dragStartCol) {
-                        dragDirection = 'horizontal';
-                    }
-                }
-
-                // 드래그 방향에 따라 현재 위치 조정
-                let minRow, maxRow, minCol, maxCol;
-                if (dragDirection === 'vertical') {
-                    // 세로 방향 드래그
-                    minRow = Math.min(dragStartRow, currentRow);
-                    maxRow = Math.max(dragStartRow, currentRow);
-                    minCol = maxCol = dragStartCol;
-                } else if (dragDirection === 'horizontal') {
-                    // 가로 방향 드래그
-                    minCol = Math.min(dragStartCol, currentCol);
-                    maxCol = Math.max(dragStartCol, currentCol);
-                    minRow = maxRow = dragStartRow;
-                } else {
-                    // 방향이 결정되지 않은 경우 (첫 셀)
-                    minRow = maxRow = dragStartRow;
-                    minCol = maxCol = dragStartCol;
-                }
-
-                // 이전 드래그 영역의 셀들을 원래 상태로 복원
-                const cells = document.getElementsByClassName('cell');
-                for (let cell of cells) {
-                    const row = parseInt(cell.dataset.row);
-                    const col = parseInt(cell.dataset.col);
-                    
-                    // 이전 드래그 영역에 있지만 현재 드래그 영역에 없는 셀 복원
-                    if (row >= Math.min(dragStartRow, dragEndRow) && 
-                        row <= Math.max(dragStartRow, dragEndRow) && 
-                        col >= Math.min(dragStartCol, dragEndCol) && 
-                        col <= Math.max(dragStartCol, dragEndCol)) {
-                        // 현재 드래그 영역에 없는 셀 복원
-                        if (row < minRow || row > maxRow || col < minCol || col > maxCol) {
-                            cell.classList.remove('filled', 'marked', 'question');
-                            cell.textContent = '';
-                            playerGrid[row][col] = 0;
-                        }
-                    }
-                }
-
-                // 현재 드래그 영역 업데이트
-                dragEndRow = currentRow;
-                dragEndCol = currentCol;
-
-                // 현재 드래그 영역의 셀들에 동작 적용
-                for (let cell of cells) {
-                    const row = parseInt(cell.dataset.row);
-                    const col = parseInt(cell.dataset.col);
-                    
-                    // 현재 드래그 영역에 있는 셀에 동작 적용
-                    if (row >= minRow && row <= maxRow && col >= minCol && col <= maxCol) {
-                        switch (currentAction) {
-                            case 'fill':
-                                cell.classList.remove('marked', 'question');
-                                cell.classList.add('filled');
-                                cell.textContent = '';
-                                playerGrid[row][col] = 1;
-                                break;
-                            case 'clear':
-                                cell.classList.remove('filled', 'marked', 'question');
-                                cell.textContent = '';
-                                playerGrid[row][col] = 0;
-                                break;
-                            case 'mark':
-                                if (!cell.classList.contains('filled')) {
-                                    cell.classList.remove('question');
-                                    cell.classList.add('marked');
-                                    cell.textContent = 'X';
-                                    playerGrid[row][col] = 2;
-                                }
-                                break;
-                            case 'question':
-                                if (!cell.classList.contains('filled')) {
-                                    cell.classList.remove('marked');
-                                    cell.classList.add('question');
-                                    cell.textContent = '?';
-                                    playerGrid[row][col] = 3;
-                                }
-                                break;
-                        }
-                    }
-                }
-            });
-
-            // 컨텍스트 메뉴 방지
-            cell.addEventListener('contextmenu', function(e) {
-                e.preventDefault();
-            });
-        }
-
-        // 마우스 업 이벤트를 문서 전체에 추가
-        document.addEventListener('mouseup', function() {
-            isMouseDown = false;
-            currentAction = null;
-            dragStartRow = null;
-            dragStartCol = null;
-            dragEndRow = null;
-            dragEndCol = null;
-            dragDirection = null; // 드래그 방향 초기화
-        });
-
-        // 우스가 게임 영역을 벗어날 때 드래그 상태 해제
-        grid.addEventListener('mouseleave', function() {
-            isMouseDown = false;
-            currentAction = null;
-        });
-
-        // 정답 확인 함수
-        function checkSolution() {
-            const status = document.getElementById('status');
-            let correct = true;
-            
-            for (let i = 0; i < 5; i++) {
-                for (let j = 0; j < 5; j++) {
-                    // 정답 확인
-                    if (solution[i][j] === 1 && playerGrid[i][j] !== 1) {
-                        correct = false;
-                        break;
-                    }
-                    // 오답 확인
-                    if (solution[i][j] === 0 && playerGrid[i][j] === 1) {
-                        correct = false;
+        function checkCompletion() {
+            let isComplete = true;
+            for (let i = 0; i < currentSize; i++) {
+                for (let j = 0; j < currentSize; j++) {
+                    if ((grid[i][j] === 1) !== (solution[i][j] === 1)) {
+                        isComplete = false;
                         break;
                     }
                 }
-                if (!correct) break;
-            }
-            // 상태 표시
-            status.textContent = correct ? '정답입니다! 🎉' : '틀렸습니다. 다시 시도해보세요.';
-            status.style.color = correct ? '#4CAF50' : '#f44336';
-        }
-
-        // 그리드 초기화 함수
-        function resetGrid() {
-            const cells = document.getElementsByClassName('cell');
-            for (let cell of cells) {
-                cell.classList.remove('filled', 'marked', 'question');
-                cell.textContent = '';
-            }
-            // 그리드 초기화
-            for (let i = 0; i < 5; i++) {
-                for (let j = 0; j < 5; j++) {
-                    playerGrid[i][j] = 0;
-                }
-            }
-            // 상태 초기화
-            document.getElementById('status').textContent = '';
-
-            // 히스토리 기화
-            moveHistory = [];
-            document.getElementById('undoBtn').disabled = true;
-        }
-
-        // 해답 보기 함수 추가
-        function showSolution() {
-            const cells = document.getElementsByClassName('cell');
-            for (let cell of cells) {
-                const row = parseInt(cell.dataset.row);
-                const col = parseInt(cell.dataset.col);
-                
-                // 모든 마크와 물음표 제거
-                cell.classList.remove('marked', 'question');
-                cell.textContent = '';
-                
-                // 해답에 따라 셀 채우기
-                if (solution[row][col] === 1) {
-                    cell.classList.add('filled');
-                    playerGrid[row][col] = 1;
-                } else {
-                    cell.classList.remove('filled');
-                    playerGrid[row][col] = 0;
-                }
+                if (!isComplete) break;
             }
             
-            // 상태 메시지 업데이트
-            const status = document.getElementById('status');
-            status.textContent = '해이 표시되었습니다.';
-            status.style.color = '#666';
-        }
-
-        // 상태 관리를 위한 변수 추가
-        let moveHistory = [];
-        const MAX_HISTORY = 50; // 최대 저장할 이동 횟수
-
-        // 상태 저장 함수
-        function saveState() {
-            const currentState = playerGrid.map(row => [...row]); // 깊은 복사
-            moveHistory.push(currentState);
-            
-            // 히스토리 크기 제한
-            if (moveHistory.length > MAX_HISTORY) {
-                moveHistory.shift();
-            }
-            
-            // 되돌리기 버튼 활성화
-            document.getElementById('undoBtn').disabled = false;
-        }
-
-        // 되돌리기 함수
-        function undoMove() {
-            if (moveHistory.length > 0) {
-                const previousState = moveHistory.pop();
-                playerGrid = previousState.map(row => [...row]); // 깊은 복사
-                
-                // 그리드 UI 업데이트
-                updateGridUI();
-                
-                // 히스토리가 비어있으면 버튼 비활성화
-                if (moveHistory.length === 0) {
-                    document.getElementById('undoBtn').disabled = true;
-                }
+            const messageElement = document.getElementById('message');
+            if (isComplete) {
+                messageElement.textContent = "정답입니다!";
+                messageElement.style.color = "#4CAF50";
+            } else {
+                messageElement.textContent = "";
             }
         }
 
-        // 그리드 UI 업데이트 함수
-        function updateGridUI() {
-            const cells = document.getElementsByClassName('cell');
-            for (let cell of cells) {
-                const row = parseInt(cell.dataset.row);
-                const col = parseInt(cell.dataset.col);
-                
-                // 셀 상태 초기화
-                cell.classList.remove('filled', 'marked', 'question');
-                cell.textContent = '';
-                
-                // 현재 상태에 따라 셀 업데이트
-                switch (playerGrid[row][col]) {
-                    case 1:
-                        cell.classList.add('filled');
-                        break;
-                    case 2:
-                        cell.classList.add('marked');
-                        cell.textContent = 'X';
-                        break;
-                    case 3:
-                        cell.classList.add('question');
-                        cell.textContent = '?';
-                        break;
-                }
-            }
-        }
-
-        // 줌 컨트롤 추가
-        function addZoomControls() {
-            const zoomControls = document.createElement('div');
-            zoomControls.className = 'zoom-controls';
-            
-            const zoomIn = document.createElement('button');
-            zoomIn.className = 'zoom-btn';
-            zoomIn.innerHTML = '+';
-            
-            const zoomOut = document.createElement('button');
-            zoomOut.className = 'zoom-btn';
-            zoomOut.innerHTML = '−';  // 특수 마이너스 기호 사용
-            
-            let currentScale = 1;
-            const MIN_SCALE = 0.5;
-            const MAX_SCALE = 2;
-            
-            zoomIn.addEventListener('click', () => {
-                currentScale = Math.min(MAX_SCALE, currentScale + 0.2);
-                updateZoom();
-            });
-            
-            zoomOut.addEventListener('click', () => {
-                currentScale = Math.max(MIN_SCALE, currentScale - 0.2);
-                updateZoom();
-            });
-            
-            function updateZoom() {
-                const puzzleArea = document.querySelector('.puzzle-area');
-                puzzleArea.style.transform = `scale(${currentScale})`;
-                // 줌 레벨 저장
-                localStorage.setItem('puzzleZoomLevel', currentScale);
-            }
-            
-            // 저장된 줌 레벨 복원
-            const savedZoom = localStorage.getItem('puzzleZoomLevel');
-            if (savedZoom) {
-                currentScale = parseFloat(savedZoom);
-                updateZoom();
-            }
-            
-            zoomControls.appendChild(zoomOut);
-            zoomControls.appendChild(zoomIn);
-            document.body.appendChild(zoomControls);
-        }
-
-        // 페이지 로드 시 줌 컨트롤 추가
-        document.addEventListener('DOMContentLoaded', addZoomControls);
+        initializeGame(10);
     </script>
 </body>
 </html>
