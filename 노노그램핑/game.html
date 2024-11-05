@@ -491,7 +491,7 @@
             );
             
             document.getElementById('status').textContent = 
-                correct ? '정답입니다!' : '틀렸습니다. 다시 시도해보세요.';
+                correct ? '정답입니다!' : '틀렸습니다. 다�� 시도해보세���.';
         }
 
         function showSolution() {
@@ -507,52 +507,86 @@
         }
 
         function setDifficulty(size) {
-            if (size === currentSize) {
-                resetGrid();
-            } else {
-                initializeGame(size);
-            }
-            document.getElementById('status').textContent = '';
+            // 기존 게임 초기화
+            currentSize = size;
+            grid = Array(size).fill().map(() => Array(size).fill(0));
+            
+            // 새로운 퍼즐 생성
+            generatePuzzle();
+            
+            // 게임 초기화 및 화면 업데이트
+            initializeGame(size);
+            
+            // 줌 리셋
+            currentZoom = 1.0;
+            updateZoom();
+            
+            // 메시지 초기화
+            const messageElement = document.getElementById('message');
+            messageElement.textContent = '';
         }
 
         function generatePuzzle() {
-            solution = Array(currentSize).fill().map(() => 
-                Array(currentSize).fill().map(() => 
-                    Math.random() < 0.5 ? 1 : 0
-                )
-            );
+            // 기존 solution 배열 초기화
+            solution = Array(currentSize).fill().map(() => Array(currentSize).fill(0));
+            
+            // 랜덤하게 새로운 퍼즐 생성
+            for (let i = 0; i < currentSize; i++) {
+                for (let j = 0; j < currentSize; j++) {
+                    solution[i][j] = Math.random() < 0.5 ? 0 : 1;
+                }
+            }
+            
+            // 힌트 계산
+            calculateHints();
+            
+            // 게임 그리드 초기화
+            grid = Array(currentSize).fill().map(() => Array(currentSize).fill(0));
+        }
 
-            rowHints = solution.map(row => {
-                const hints = [];
+        function calculateHints() {
+            // 가로 힌트 계산
+            rowHints = [];
+            for (let i = 0; i < currentSize; i++) {
+                let hints = [];
                 let count = 0;
-                
-                for (let i = 0; i <= row.length; i++) {
-                    if (i < row.length && row[i] === 1) {
+                for (let j = 0; j < currentSize; j++) {
+                    if (solution[i][j] === 1) {
                         count++;
                     } else if (count > 0) {
                         hints.push(count);
                         count = 0;
                     }
                 }
-                
-                return hints.length ? hints : [0];
-            });
+                if (count > 0) {
+                    hints.push(count);
+                }
+                if (hints.length === 0) {
+                    hints.push(0);
+                }
+                rowHints.push(hints);
+            }
 
+            // 세로 힌트 계산
             colHints = [];
             for (let j = 0; j < currentSize; j++) {
-                const hints = [];
+                let hints = [];
                 let count = 0;
-                
-                for (let i = 0; i <= currentSize; i++) {
-                    if (i < currentSize && solution[i][j] === 1) {
+                for (let i = 0; i < currentSize; i++) {
+                    if (solution[i][j] === 1) {
                         count++;
                     } else if (count > 0) {
                         hints.push(count);
                         count = 0;
                     }
                 }
-                
-                colHints.push(hints.length ? hints : [0]);
+                if (count > 0) {
+                    hints.push(count);
+                }
+                if (hints.length === 0) {
+                    hints.push(0);
+                }
+                colHints.push(hints);
             }
         }
 
